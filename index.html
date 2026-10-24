@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WFH Attendance</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#182230;background:#f4f7fb;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}header{background:#132b46;color:white;padding:24px max(24px,calc((100vw - 1120px)/2));display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:42px;height:42px;border-radius:12px;background:#3f8cff;display:grid;place-items:center;font-weight:800;font-size:20px}.brand h1{font-size:20px;margin:0}.brand p{margin:3px 0 0;color:#c5d3e3;font-size:12px}
+main{max-width:1120px;margin:28px auto;padding:0 24px}.topline{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:22px}.topline h2{font-size:25px;margin:0 0 6px}.muted{color:#708096;font-size:14px}.date{font-weight:650;color:#35465c}
+.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}.card{background:white;border:1px solid #e3eaf2;border-radius:16px;padding:22px;box-shadow:0 4px 18px #19385b08}.card h3{margin:0 0 16px;font-size:16px}.status{display:inline-flex;align-items:center;gap:8px;background:#e8f7ef;color:#167345;padding:7px 11px;border-radius:20px;font-size:12px;font-weight:700}.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.clock{font-size:42px;letter-spacing:-1.5px;font-weight:750;margin:20px 0 4px}.clocksub{font-size:13px;color:#718096}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+button{border:0;border-radius:10px;padding:12px 16px;font-weight:700;cursor:pointer;font:inherit;font-size:14px}.primary{background:#286fe8;color:white}.secondary{background:#edf2f8;color:#33445b}.danger{background:#fff0ed;color:#b13a2c}button:disabled{opacity:.45;cursor:not-allowed}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}.metric{background:#f5f8fc;padding:14px;border-radius:12px}.metric strong{display:block;font-size:21px}.metric span{font-size:12px;color:#718096}
+form{display:grid;gap:12px}label{font-size:12px;font-weight:700;color:#506078;display:grid;gap:6px}input,select,textarea{width:100%;border:1px solid #d8e1ec;border-radius:9px;padding:11px;background:white;font:inherit;color:#1d2b3b}textarea{resize:vertical;min-height:76px}.full{width:100%}
+.tablewrap{overflow:auto;margin-top:12px}table{width:100%;border-collapse:collapse;min-width:600px}th,td{text-align:left;padding:13px 12px;border-bottom:1px solid #edf1f6;font-size:13px}th{font-size:11px;color:#77859a;text-transform:uppercase;letter-spacing:.05em}tbody tr:last-child td{border-bottom:0}.tag{padding:5px 8px;border-radius:7px;background:#eaf2ff;color:#245bb3;font-weight:700;font-size:11px}.empty{text-align:center;padding:26px;color:#7c899b;font-size:13px}.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.notice{background:#fff7e6;border:1px solid #f2dfb2;color:#76551b;border-radius:10px;padding:12px;font-size:12px;line-height:1.5;margin-top:16px}
+footer{text-align:center;padding:24px;color:#8b98a8;font-size:12px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.clock{font-size:36px}.metrics{grid-template-columns:1fr 1fr 1fr}main{margin:20px auto;padding:0 14px}header{padding:20px 16px}}
+</style>
+</head>
+<body>
+<header><div class="brand"><div class="logo">W</div><div><h1>WFH Attendance</h1><p>Remote work, made simple</p></div></div><div id="headerDate" class="date"></div></header>
+<main>
+<div class="topline"><div><h2>Good day 👋</h2><div class="muted">Manage your work-from-home day and attendance.</div></div><div class="status"><span class="dot"></span><span id="statusText">Not clocked in</span></div></div>
+<div class="grid">
+<section class="card"><h3>Today's attendance</h3><div class="clock" id="clock">--:--:--</div><div class="clocksub" id="clockSub">Ready when you are</div>
+<div class="actions"><button class="primary" id="clockIn">Clock in</button><button class="secondary" id="clockOut" disabled>Clock out</button></div>
+<div class="metrics"><div class="metric"><strong id="hoursToday">0h 00m</strong><span>Hours today</span></div><div class="metric"><strong id="daysMonth">0</strong><span>WFH days this month</span></div><div class="metric"><strong id="daysWeek">0</strong><span>WFH days this week</span></div></div>
+<div class="notice">Attendance is saved in this browser on this device. This demo does not send records to a company server.</div>
+</section>
+<section class="card"><h3>Request a WFH day</h3><form id="requestForm"><label>Work date<input id="requestDate" type="date" required></label><label>Reason / work plan<textarea id="requestReason" placeholder="What will you work on remotely?" required></textarea></label><button class="primary full" type="submit">Submit request</button></form></section>
+</div>
+<section class="card" style="margin-top:18px"><div class="sectionhead"><h3 style="margin:0">Attendance history</h3><button class="secondary" id="exportBtn">Export CSV</button></div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Clock in</th><th>Clock out</th><th>Duration</th><th>Type</th></tr></thead><tbody id="historyBody"></tbody></table><div id="historyEmpty" class="empty">No attendance yet. Clock in to start your first record.</div></div></section>
+<section class="card" style="margin-top:18px"><h3>WFH requests</h3><div class="tablewrap"><table><thead><tr><th>Requested date</th><th>Reason / plan</th><th>Submitted</th><th>Status</th></tr></thead><tbody id="requestBody"></tbody></table><div id="requestEmpty" class="empty">No WFH requests submitted.</div></div></section>
+</main><footer>WFH Attendance • Lightweight browser-based starter system</footer>
+<script>
+const KEY='wfh-attendance-v1';
+let data=JSON.parse(localStorage.getItem(KEY)||'{"records":[],"requests":[]}');
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const dateKey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const timeStr=d=>pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+const today=dateKey(new Date());
+$('headerDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+$('requestDate').value=today;$('requestDate').min=today;
+function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
+function duration(r){if(!r.in)return 0;return Math.max(0,((r.out||Date.now())-r.in)/3600000)}
+function fmtHours(ms){let mins=Math.floor(ms/60000);return Math.floor(mins/60)+'h '+pad(mins%60)+'m'}
+function current(){return data.records.find(r=>r.date===today&&!r.out)}
+function render(){
+ let active=current();$('statusText').textContent=active?'Clocked in':'Not clocked in';
+ $('clockIn').disabled=!!active;$('clockOut').disabled=!active;
+ $('clockSub').textContent=active?'Session started at '+new Date(active.in).toLocaleTimeString():'Ready when you are';
+ const now=new Date();$('clock').textContent=timeStr(now);
+ let todayHours=data.records.filter(r=>r.date===today).reduce((s,r)=>s+duration(r),0);
+ $('hoursToday').textContent=fmtHours(todayHours*3600000);
+ let month=now.getMonth(),year=now.getFullYear();
+ $('daysMonth').textContent=new Set(data.records.filter(r=>{let d=new Date(r.date+'T00:00:00');return d.getMonth()===month&&d.getFullYear()===year}).map(r=>r.date)).size;
+ let monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));monday.setHours(0,0,0,0);
+ $('daysWeek').textContent=new Set(data.records.filter(r=>new Date(r.date+'T00:00:00')>=monday&&r.date<=today).map(r=>r.date)).size;
+ const records=[...data.records].sort((a,b)=>b.date.localeCompare(a.date));
+ $('historyBody').innerHTML=records.map(r=>'<tr><td>'+r.date+'</td><td>'+(r.in?new Date(r.in).toLocaleTimeString():'—')+'</td><td>'+(r.out?new Date(r.out).toLocaleTimeString():'In progress')+'</td><td>'+fmtHours(duration(r)*3600000)+'</td><td><span class="tag">WFH</span></td></tr>').join('');
+ $('historyEmpty').style.display=records.length?'none':'block';
+ $('requestBody').innerHTML=[...data.requests].reverse().map(r=>'<tr><td>'+r.date+'</td><td>'+escapeHtml(r.reason)+'</td><td>'+new Date(r.created).toLocaleDateString()+'</td><td><span class="tag">'+r.status+'</span></td></tr>').join('');
+ $('requestEmpty').style.display=data.requests.length?'none':'block';
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('clockIn').onclick=()=>{let t=Date.now();data.records.push({date:today,in:t,out:null});save()};
+$('clockOut').onclick=()=>{let r=current();if(r){r.out=Date.now();save()}};
+$('requestForm').onsubmit=e=>{e.preventDefault();let date=$('requestDate').value,reason=$('requestReason').value.trim();if(!date||!reason)return;if(data.requests.some(r=>r.date===date&&r.status==='Pending')){alert('A pending request already exists for this date.');return}data.requests.push({date,reason,created:Date.now(),status:'Pending'});$('requestReason').value='';save()};
+$('exportBtn').onclick=()=>{let rows=[['Date','Clock in','Clock out','Duration hours','Type'],...data.records.map(r=>[r.date,r.in?new Date(r.in).toISOString():'',r.out?new Date(r.out).toISOString():'',duration(r).toFixed(2),'WFH'])];let csv=rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');let url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));let a=document.createElement('a');a.href=url;a.download='wfh-attendance-'+today+'.csv';a.click();URL.revokeObjectURL(url)};
+render();setInterval(render,1000);
+</script></body></html>
